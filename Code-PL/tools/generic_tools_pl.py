@@ -493,9 +493,10 @@ def do_list_of_profiles(nb_patt, n_by_page=None,
 
     return tmp_dic
 
-def get_source_data_dir(dirname='/Users/dahmani/Desktop/stagelong/projetlong/data_source_dr/Region{}'.format(region), verbose=False):
+def get_source_data_dir(dirname=None, verbose=False):
     import os
-    
+    if dirname is None :
+        dirname='/Users/dahmani/Desktop/stagelong/projetlong/data_source_dr/Region{}'.format(region)
     # Repertoire des donnees
     try:
         # WORK dir carlos projet ryn sur Jean Zay
@@ -1162,11 +1163,12 @@ def read_data_set_characteristics(data_dir, file_prefix='test', set_label=None, 
     return combi_dic
 
 
-def load_forcing_data(data_dir, file_prefix=None, set_label=None, forcing_names=['ghg', 'aer', 'nat', 'hist'], dataframe=False, verbose=False):
+def load_forcing_data(data_dir=None, file_prefix=None, set_label=None, forcing_names=['ghg', 'aer', 'nat', 'hist'], dataframe=False, verbose=False):
     import os
     import numpy as np
     import pandas as pd
-    
+    if data_dir is None:
+        data_dir= "/Users/dahmani/Desktop/GitPL/data_source_dr/Region{}".format(region)
     data_dic = {}
     for iforcing,forcing in enumerate(forcing_names) :
         if verbose:
@@ -1186,7 +1188,11 @@ def load_forcing_data(data_dir, file_prefix=None, set_label=None, forcing_names=
                 data_dic[forcing] = xxx_df.copy()
             else:
                 data_dic[forcing] = xxx = xxx_df.drop('model',axis=1).values
-    
+        
+        # model_names = None
+        # all_years = None
+        # mod_df= None 
+
         if len(data_dic) > 0:  # au moin un fichier lu
             model_names = np.unique(xxx_df['model'].values).tolist()
 

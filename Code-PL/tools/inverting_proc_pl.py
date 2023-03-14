@@ -612,7 +612,7 @@ def inversion_procedure (base_case_to_explore, sub_case_to_explore, inversion_su
     
     # Repertoire des donnees
     if data_in_dir is None :
-        data_in_dir = gt.get_source_data_dir(dirname=source_dirname, verbose=verbose)
+        data_in_dir = gt.get_source_data_dir(dirname=None, verbose=verbose)
 
     if data_out_dir is None :
         data_out_dir = './data_out'
