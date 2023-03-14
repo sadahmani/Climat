@@ -496,11 +496,11 @@ def do_list_of_profiles(nb_patt, n_by_page=None,
 def get_source_data_dir(dirname=None, verbose=False):
     import os
     if dirname is None :
-        dirname='/Users/dahmani/Desktop/stagelong/projetlong/data_source_dr/Region{}'.format(region)
+        dirname='/Users/dahmani/Desktop/GitPL/data_source_dr/Region{}'.format(region)
     # Repertoire des donnees
     try:
         # WORK dir carlos projet ryn sur Jean Zay
-        data_dir = f'/Users/dahmani/Desktop/stagelong/projetlong/data_source_dr/Region{region}'
+        data_dir = f'/Users/dahmani/Desktop/GitPL/data_source_dr/Region{region}'
         if not os.path.isdir(data_dir):
             if verbose:
                 print(f" ** data_dir '{data_dir}' not found. Trying next...")
