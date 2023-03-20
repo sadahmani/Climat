@@ -1,0 +1,6 @@
+
+		begin
+      f = addfile("/Users/dahmani/Desktop/GitPL/HadCRUT/HadCRUT.5.0.1.0.analysis.summary_series.global.annual.region.nc","r")
+      print(f)
+		end
+    

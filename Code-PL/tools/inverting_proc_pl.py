@@ -708,7 +708,7 @@ def inversion_procedure (base_case_to_explore, sub_case_to_explore, inversion_su
     #all_forcing_inv_color_names_dic = data_dic['forcing_inv_color_names_dic']
     #all_years        = data_dic['years']
     T_ghg_df,T_aer_df,T_nat_df,T_hist_df = data_dic['list_of_df']
-
+    
     #forcing_names = all_forcings_src[:4]
     #forcing_colors = [all_forcing_color_dic[f.lower()] for f in forcing_names]
 
@@ -1054,7 +1054,8 @@ def inversion_procedure (base_case_to_explore, sub_case_to_explore, inversion_su
                         else:
                             # Profils HIST du modele en cours .. selection des lignes du modele ... retire la colone 'model' ... selectionne les colones (selon lenDS) ... values (array)
                             HIST_mod_for_inv_arr = T_hist_df.loc[lambda df: df['model'] == mod_to_invert, :].drop('model', axis=1).iloc[:,-lenDS:].values.copy()
-                        #print(HIST_mod_for_inv_arr)
+                            print(HIST_mod_for_inv_arr)
+                        
                                                 
                         if len(HIST_mod_for_inv_arr.shape) == 1 :
                             HIST_mod_for_inv_arr = HIST_mod_for_inv_arr.reshape((1,len(HIST_mod_for_inv_arr)))
