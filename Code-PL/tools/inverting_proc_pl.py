@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Inverting models function for PL
+Inverting models function for PL (v.4 21/03/2023)
 
 Contains inverting functions:
     
@@ -586,7 +586,9 @@ def inversion_procedure (base_case_to_explore, sub_case_to_explore, inversion_su
                          data_in_dir=None, data_out_dir=None, load_best_val=False, load_best_val2nd=False,
                          source_dirname='data_source_pl',
                          nbest_to_choose=None, choose_profiles_by_proximity_criterion='rmse', period_to_choose=None, 
-                         n_inv_by_page = None, add_mean_of_all = False,
+                         n_inv_by_page = None, 
+                         do_mean_of_each_model = False,
+                         add_mean_of_all = False,
                          inv_n_iter=2000, inv_lr_reg=0.1, inv_lr_opt=0.01, inv_alpha=0.1, inv_delta_loss_limit=1e-6, inv_delta_limit_patience=10,
                          train_years=np.arange(1900,2015), 
                          lp_nathist_filtering_dic_file='lp_nat_and_hist_filtering_param_dictionary.p',
@@ -612,6 +614,7 @@ def inversion_procedure (base_case_to_explore, sub_case_to_explore, inversion_su
     
     # Repertoire des donnees
     if data_in_dir is None :
+        #data_in_dir = gt.get_source_data_dir(dirname=source_dirname, verbose=verbose)
         data_in_dir = gt.get_source_data_dir(dirname=None, verbose=verbose)
 
     if data_out_dir is None :
@@ -708,7 +711,7 @@ def inversion_procedure (base_case_to_explore, sub_case_to_explore, inversion_su
     #all_forcing_inv_color_names_dic = data_dic['forcing_inv_color_names_dic']
     #all_years        = data_dic['years']
     T_ghg_df,T_aer_df,T_nat_df,T_hist_df = data_dic['list_of_df']
-    
+
     #forcing_names = all_forcings_src[:4]
     #forcing_colors = [all_forcing_color_dic[f.lower()] for f in forcing_names]
 
@@ -962,7 +965,7 @@ def inversion_procedure (base_case_to_explore, sub_case_to_explore, inversion_su
                         if trained_with_all :
                             print(f"\n ** Repertoire du cas: '{case_in_dir}/' Ok. Training was realized using a single model but all forcings\n"+\
                                   f"    Inversion of Model '{mod_to_invert}' will be realized using '{experiment_name_in_sdir}' saved Net ...\n")
-        
+                
                         case_out_dir = os.path.join(data_out_dir, base_case_to_explore, cnn_name_base, experiment_name_out_sdir)
                         if verbose:
                             print(f'Repertoire de sortie du cas: {case_out_dir}')
@@ -1054,8 +1057,7 @@ def inversion_procedure (base_case_to_explore, sub_case_to_explore, inversion_su
                         else:
                             # Profils HIST du modele en cours .. selection des lignes du modele ... retire la colone 'model' ... selectionne les colones (selon lenDS) ... values (array)
                             HIST_mod_for_inv_arr = T_hist_df.loc[lambda df: df['model'] == mod_to_invert, :].drop('model', axis=1).iloc[:,-lenDS:].values.copy()
-                            print(HIST_mod_for_inv_arr)
-                        
+                        #print(HIST_mod_for_inv_arr)
                                                 
                         if len(HIST_mod_for_inv_arr.shape) == 1 :
                             HIST_mod_for_inv_arr = HIST_mod_for_inv_arr.reshape((1,len(HIST_mod_for_inv_arr)))
@@ -1098,6 +1100,7 @@ def inversion_procedure (base_case_to_explore, sub_case_to_explore, inversion_su
                                                                        nb_of_profiles=number_of_multiobs,
                                                                        choice_method=multiobs_choice_method,
                                                                        rand_seed=multiobs_random_seed,
+                                                                       do_mean_of_each_model=do_mean_of_each_model,
                                                                        add_mean_of_all=add_mean_of_all,
                                                                        verbose=verbose)
         
@@ -1134,8 +1137,10 @@ def inversion_procedure (base_case_to_explore, sub_case_to_explore, inversion_su
                                 #nbe = 0
     
                                 if np.isscalar(nbe) :
+                                    # adding individual profile for inversion
                                     current_HIST_m = HIST_mod_for_inv_arr[nbe,:]
                                 else:
+                                    # if list, then averaging profiles and adding it for inversion
                                     current_HIST_m = HIST_mod_for_inv_arr[nbe,:].mean(axis=0)
                                 mltlist_HIST_m.append(current_HIST_m)
                             
@@ -1153,7 +1158,7 @@ def inversion_procedure (base_case_to_explore, sub_case_to_explore, inversion_su
                             #nbelbl_inv_filename = os.path.join(inv_dir, sdir_inv_postfix, f'NbeLbl_ST.p')
                             #lossinv_filename = os.path.join(inv_dir, sdir_inv_postfix, f'lossinv_ST.p')
                             
-                            inversion_dic_filename = os.path.join(inv_dir, sdir_inv_postfix, f'Inv_dic.p')
+                            inversion_dic_filename = os.path.join(inv_dir, sdir_inv_postfix, 'Inv_dic.p')
 
                             ## for renaming and rearraging OLD inversion files into new place and new name
                             # for fnew,fold in zip([xinv_inv_filename, yinv_inv_filename, nbe_inv_filename, nbelbl_inv_filename, lossinv_filename],
@@ -1286,6 +1291,7 @@ def inversion_procedure (base_case_to_explore, sub_case_to_explore, inversion_su
                                 mltlist_Yinv= []
                                 mltlist_Ni= []
                                 mltlist_lossinv = []
+                                #mltlist_ninv = []
                                 mltlist_nbe = []
                                 mltlist_nbe_label = []
                                 for i_nbe,nbe in enumerate(list_of_nbe):
@@ -1294,7 +1300,7 @@ def inversion_procedure (base_case_to_explore, sub_case_to_explore, inversion_su
                                         nbe_label = f'{nbe}'
                                         #current_HIST_m = HIST_mod_for_inv_tensor[nbe,:]
                                     else:
-                                        nbe_label = f"MEAN-{nbe[0]}-to-{nbe[-1]}"
+                                        nbe_label = f"AVERAGED-{nbe[0]}-to-{nbe[-1]}"
                                         #current_HIST_m = HIST_mod_for_inv_tensor[nbe,:].mean(axis=0)
 
                                     HIST_M = torch.reshape(torch.tensor(mltlist_HIST_m[i_nbe].copy(), dtype=dtype).to(device),
@@ -1391,6 +1397,7 @@ def inversion_procedure (base_case_to_explore, sub_case_to_explore, inversion_su
                                     mltlist_Xinv.append(list_Xinv0)
                                     mltlist_Yinv.append(list_Yinv0)
                                     mltlist_lossinv.append(list_lossinv0)
+                                    #mltlist_ninv.append(ninv)
                                     mltlist_nbe.append(nbe)
                                     mltlist_nbe_label.append(nbe_label)
                                     mltlist_Ni.append(list_Ni)
@@ -2183,7 +2190,13 @@ def plot_inverted_hist_profiles_by_net(base_case_to_explore, sub_case_to_explore
             #print(f"#DBG1# len(mlt_list_Yinv),mlt_list_Yinv[0].shape",len(mlt_list_Yinv),mlt_list_Yinv[0].shape)
             #print(f"#DBG1# len(mlt_list_nbe),mlt_list_nbe",len(mlt_list_nbe),mlt_list_nbe)
 
-            added_mean_of_all = type(mlt_list_nbe[-1]) is list
+            done_mean_of_each_model = added_mean_of_all = False
+            if type(mlt_list_nbe[0]) is list :
+                done_mean_of_each_model = True
+                added_mean_of_all = False
+            else:
+                added_mean_of_all = type(mlt_list_nbe[-1]) is list
+            
             nb_inverted_patt = len(mlt_list_nbe)
             #n_sim_by_page = n_sim_to_plot if n_sim_to_plot is not None else nb_inverted_patt+1
             if added_mean_of_all :
@@ -2193,6 +2206,7 @@ def plot_inverted_hist_profiles_by_net(base_case_to_explore, sub_case_to_explore
                 print(f"nb_inverted_patt: {nb_inverted_patt}+1, mlt_list_nbe: {mlt_list_nbe[:-1]}, [added_mean_of_all: {added_mean_of_all}]")
                 #nbe_inverted_label = f"all {nb_inverted_patt}+ALL Hist profiles"
                 list_profiles_dic = gt.do_list_of_profiles(nb_inverted_patt, n_by_page=n_sim_to_plot,
+                                                           do_mean_of_each_model=done_mean_of_each_model,
                                                            add_mean_of_all=added_mean_of_all,
                                                            verbose=verbose)
                 nbe_inverted_label = list_profiles_dic['label']
@@ -2204,6 +2218,7 @@ def plot_inverted_hist_profiles_by_net(base_case_to_explore, sub_case_to_explore
                 print(f"nb_inverted_patt: {nb_inverted_patt}, mlt_list_nbe: {mlt_list_nbe}, [added_mean_of_all: {added_mean_of_all}]")
                 #nbe_inverted_label = f"all {nb_inverted_patt} Hist profiles"
                 list_profiles_dic = gt.do_list_of_profiles(nb_inverted_patt, n_by_page=n_sim_to_plot,
+                                                           do_mean_of_each_model=done_mean_of_each_model,
                                                            verbose=verbose)
                 nbe_inverted_label = list_profiles_dic['label']
                 ilist_of_nbe = list_profiles_dic['list']
@@ -2581,7 +2596,13 @@ def plot_averaged_inverted_profiles_by_net (base_case_to_explore, sub_case_to_ex
         mlt_for_average_of_mean_Yinv = np.array(list_for_average_of_mean_Yinv) #.mean(axis=0)
         #print(f"#DBG2# mlt_for_average_of_mean_Yinv.shape",mlt_for_average_of_mean_Yinv.shape)
 
-        added_mean_of_all = type(mlt_list_nbe[-1]) is list
+        done_mean_of_each_model = added_mean_of_all = False
+        if type(mlt_list_nbe[0]) is list :
+            done_mean_of_each_model = True
+            added_mean_of_all = False
+        else:
+            added_mean_of_all = type(mlt_list_nbe[-1]) is list
+
         nb_inverted_patt = len(mlt_list_nbe)
         #n_sim_by_page = n_sim_to_plot if n_sim_to_plot is not None else nb_inverted_patt+1
         if added_mean_of_all :
@@ -2591,6 +2612,7 @@ def plot_averaged_inverted_profiles_by_net (base_case_to_explore, sub_case_to_ex
             print(f"nb_inverted_patt: {nb_inverted_patt}+1, mlt_list_nbe: {mlt_list_nbe[:-1]}, [added_mean_of_all: {added_mean_of_all}]")
             #nbe_inverted_label = f"all {nb_inverted_patt}+ALL Hist profiles"
             list_profiles_dic = gt.do_list_of_profiles(nb_inverted_patt, n_by_page=n_sim_to_plot,
+                                                       do_mean_of_each_model=done_mean_of_each_model,
                                                        add_mean_of_all=added_mean_of_all,
                                                        verbose=verbose)
             nbe_inverted_label = list_profiles_dic['label']
@@ -2602,6 +2624,7 @@ def plot_averaged_inverted_profiles_by_net (base_case_to_explore, sub_case_to_ex
             print(f"nb_inverted_patt: {nb_inverted_patt}, mlt_list_nbe: {mlt_list_nbe}, [added_mean_of_all: {added_mean_of_all}]")
             #nbe_inverted_label = f"all {nb_inverted_patt} Hist profiles"
             list_profiles_dic = gt.do_list_of_profiles(nb_inverted_patt, n_by_page=n_sim_to_plot,
+                                                       do_mean_of_each_model=done_mean_of_each_model,
                                                        verbose=verbose)
             nbe_inverted_label = list_profiles_dic['label']
             ilist_of_nbe = list_profiles_dic['list']
@@ -3207,12 +3230,14 @@ def plot_averaged_inv_all_forcings_by_model (base_case_to_explore, sub_case_to_e
 def plot_averaged_inv_all_forcings_by_net (base_case_to_explore, sub_case_to_explore, inversion_suffix,
                                            trained_with_all=False, settings_label=None, sset_sdir_dic=None, 
                                            models_to_plot=None, load_best_val=False, load_best_val2nd=False,
-                                           plot_src4inv=False, plot_inv_x=True,
+                                           plot_src4inv=False, plot_inv_x=True, plot_ini_x=True,
+                                           trunc_padded_xinv=True,
                                            list_of_trained_models=None,           # valid only in case of "experiences jumelles" and Obs inversion
                                            data_in_dir=None, data_out_dir=None, figs_dir=None, save_figs=True,
                                            source_dirname='data_source_pl',
-                                           plot_forc_shaded_region=False, alpha_for_shaded=0.4, lw_for_shaded=0.5,
-                                           hatch_src_for_shaded='||', hatch_for_shaded='//', hatch_for_shaded_inv='\\\\\\', errorlimits_percent=None, errorlimits_n_rms=1,
+                                           plot_forc_shaded_region=False,
+                                           alpha_for_shaded=0.4, lw_for_shaded=0.5, hatch_for_shaded='//', 
+                                           hatch_src_for_shaded='||', hatch_for_shaded_inv='\\\\\\', errorlimits_percent=None, errorlimits_n_rms=1,
                                            alpha_for_mean_shaded=0.4, lw_for_mean_shaded=0.5, hatch_for_mean_shaded_inv='\\\\',
                                            force_plot=False, force_write=False, plot_mean_err=False, mean_err_lightness_factor=0.25,
                                            inv_label=None, t_limits=None,
@@ -3680,11 +3705,13 @@ def plot_averaged_inv_all_forcings_by_net (base_case_to_explore, sub_case_to_exp
                 
                         figs_file = f"Fig{local_nb_label}_inverted-averaged-all-forcings-{n_models}-models-{models_label_prnt}_net-{innet}_{net_label}"
                         if plot_mean_err :                    figs_file += "_MeanInv"
+                        if plot_ini_x :                       figs_file += "_+Xini"
                         if plot_src4inv :                     figs_file += "_+XsrcMod"
-                        if plot_inv_x :                       figs_file += "_+XiniMod"
+                        if plot_inv_x :                       figs_file += "_+XinvMod"
                         if fixed_t_limits_ok :                figs_file += "_FIX-T"
                         if plot_forc_shaded_region:           figs_file += f"_Shaded-{interval_label}"
                         else:                                 figs_file += f"_ErrBar-{interval_label}"
+                        if not trunc_padded_xinv :            figs_file += "_wXpadded"
                         figs_file += f".{fig_ext}"
                         figs_filename = os.path.join(case_figs_dir,figs_file)
                         
@@ -3729,6 +3756,9 @@ def plot_averaged_inv_all_forcings_by_net (base_case_to_explore, sub_case_to_exp
                     # inverted data filename commun postfix
                     #inv_postfix = f'{nnet_invert_prnt}_N{innet}_{net_label}-net_mod-{mod_to_invert}'
         
+                    # mlt_list_Xinv = pickle.load( open( os.path.join(inv_dir, f'Xinv_ST.p'), "rb" ) )
+                    # mlt_list_Yinv = pickle.load( open( os.path.join(inv_dir, f'Yinv_ST.p'), "rb" ) )
+                    # mlt_list_nbe = pickle.load( open( os.path.join(inv_dir, f'Nbe_ST.p'), "rb" ) ) 
                     inversion_dic = pickle.load( open( os.path.join(inv_dir, f'Inv_dic.p'), "rb" ) )
                     
                     mlt_list_Xinv = inversion_dic['Xinv']
@@ -3737,13 +3767,47 @@ def plot_averaged_inv_all_forcings_by_net (base_case_to_explore, sub_case_to_exp
                     mlt_list_nbe = inversion_dic['nbe']
                     mlt_list_nbe_label = inversion_dic['nbe_label']
 
-                    # mlt_list_Xinv = pickle.load( open( os.path.join(inv_dir, f'Xinv_ST.p'), "rb" ) )
-                    # mlt_list_Yinv = pickle.load( open( os.path.join(inv_dir, f'Yinv_ST.p'), "rb" ) )
-                    # mlt_list_nbe = pickle.load( open( os.path.join(inv_dir, f'Nbe_ST.p'), "rb" ) ) 
                     print(f'mlt_list_Xinv/mlt_list_Yinv/mlt_list_nbe lists lengths: {len(mlt_list_Xinv)} / {len(mlt_list_Yinv)} / {len(mlt_list_nbe)}')
                     print(f'mlt_list_Xinv[0]/mlt_list_Yinv[0]/mlt_list_nbe[0] lists types: {type(mlt_list_Xinv[0])} / {type(mlt_list_Yinv[0])} / {type(mlt_list_nbe[0])}')
                     print(f'mlt_list_Xinv[0]/mlt_list_Yinv[0] shapes & mlt_list_nbe[0]: {mlt_list_Xinv[0].shape} / {mlt_list_Yinv[0].shape} & {mlt_list_nbe[0]}')
-    
+
+                    done_mean_of_each_model = added_mean_of_all = False
+                    if type(mlt_list_nbe[0]) is list :
+                        done_mean_of_each_model = True
+                        added_mean_of_all = False
+                    else:
+                        added_mean_of_all = type(mlt_list_nbe[-1]) is list
+
+                    if False :
+                        
+                        nb_inverted_patt = len(mlt_list_nbe)
+                        if added_mean_of_all :
+                            # si le ensemble-moyenné a ete inversé aussi, alors on reduit de 1 le nombre de patterns inverses
+                            nb_inverted_patt -= 1
+                            #n_sim_by_page -= 1
+                            print(f"nb_inverted_patt: {nb_inverted_patt}+1, mlt_list_nbe: {mlt_list_nbe[:-1]}, [added_mean_of_all: {added_mean_of_all}]")
+                            #nbe_inverted_label = f"all {nb_inverted_patt}+ALL Hist profiles"
+                            list_profiles_dic = gt.do_list_of_profiles(nb_inverted_patt,
+                                                                       do_mean_of_each_model=done_mean_of_each_model,
+                                                                       add_mean_of_all=added_mean_of_all,
+                                                                       verbose=verbose)
+                            nbe_inverted_label = list_profiles_dic['label']
+                            ilist_of_nbe = list_profiles_dic['list']
+                            ilist_of_nbe = ilist_of_nbe[:-1]  # retire le dernier (la liste d'indices des profils moynennes)
+                            ilist_of_nbe.append(nb_inverted_patt) # ajoute le derinier comme un seul indice
+                            print('ilist_of_nbe:',ilist_of_nbe,len(ilist_of_nbe),nbe_inverted_label)
+                        else:
+                            print(f"nb_inverted_patt: {nb_inverted_patt}, mlt_list_nbe: {mlt_list_nbe}, [added_mean_of_all: {added_mean_of_all}]")
+                            #nbe_inverted_label = f"all {nb_inverted_patt} Hist profiles"
+                            list_profiles_dic = gt.do_list_of_profiles(nb_inverted_patt,
+                                                                       do_mean_of_each_model=done_mean_of_each_model,
+                                                                       verbose=verbose)
+                            nbe_inverted_label = list_profiles_dic['label']
+                            ilist_of_nbe = list_profiles_dic['list']
+                            print('ilist_of_nbe:',ilist_of_nbe,len(ilist_of_nbe),nbe_inverted_label)
+            
+                        nbe_inverted_prnt = nbe_inverted_label.replace(' ','-')
+
                     n_x_forc = mlt_list_Xinv[0].shape[0]
                     n_y_forc = mlt_list_Yinv[0].shape[0]
                     
@@ -3762,11 +3826,10 @@ def plot_averaged_inv_all_forcings_by_net (base_case_to_explore, sub_case_to_exp
                     print(f'Xinvstd_arr/Yinvstd_arr shape ..... {Xinvstd_arr.shape} / {Yinvstd_arr.shape}')
             
                     if innet == 0:
-                        added_mean_of_all = type(Nbe_list[-1]) is list
-                        
-                        if added_mean_of_all:
-                            raise Exception(f" *** added_mean_of_all is activated because Nbe_list[-1] is a list !!  ABORTING because it is noy considered yet\n")
-                        
+                        # added_mean_of_all = type(Nbe_list[-1]) is list
+                        # if added_mean_of_all:
+                        #     raise Exception(f" *** added_mean_of_all is activated because Nbe_list[-1] is a list !!  ABORTING because it is noy considered yet\n")
+                    
                         nb_inverted_single_patt = len(Nbe_list) - 1 if added_mean_of_all else len(Nbe_list)
                         print(f"nb_inverted_single_patt: {nb_inverted_single_patt}, Nbe_list for average: {Nbe_list} not including last if composed, [added_mean_of_all: {added_mean_of_all}]")
         
@@ -3862,9 +3925,10 @@ def plot_averaged_inv_all_forcings_by_net (base_case_to_explore, sub_case_to_exp
                                     #hdf[iforc], = ax.plot(inversion_years, current_meanFORC_m, color=c, lw=2, alpha=0.8)
                     
                     # -------------------------------------------------------------
-                    # Plotting the X-inv ??? of source data forcings X: GHG, AER and NAT
-                    if plot_inv_x :
+                    # Plotting the X-ini ??? of source data forcings X: GHG, AER and NAT
+                    if plot_ini_x :
                         for iforc,(forc,cs) in enumerate(zip(forcing_names[:3],forcing_colors[:3])) :
+                            cs = gt.darker_color(cs)
                             if forc == 'ghg':
                                 FORC_ini_for_inv_array = inversion_GHG_df.drop('model', axis=1).loc[Nix_list,inversion_years].values
                             elif forc == 'aer':
@@ -3903,6 +3967,61 @@ def plot_averaged_inv_all_forcings_by_net (base_case_to_explore, sub_case_to_exp
                                     ax.errorbar(inversion_years, current_meanFORC_m, yerr=current_std_FORC_m, color=cs,
                                                 lw=2, elinewidth=1, alpha=0.8, label=f"ini {forc.upper()}")
                                     #hdf[iforc], = ax.plot(inversion_years, current_meanFORC_m, color=c, lw=2, alpha=0.8)
+
+                    # -------------------------------------------------------------
+                    # Plotting the X-inv ??? of source data forcings X: GHG, AER and NAT
+                    if plot_inv_x :
+                        if len(Nbe_list) > 1:
+                            print(f"\n *** too many inverted values {len(Nbe_list)} for plotting Xinv Plotted only in case of one HIST/Obs profile inverted ***")
+                        else:
+                            current_inv_years = inversion_years
+                            for iforc,(forc,cs) in enumerate(zip(forcing_names[:3],forcing_colors[:3])) :
+                                if forc == 'ghg':
+                                    FORC_inv_array = Xinv_arr[0,:,0,:]
+                                elif forc == 'aer':
+                                    FORC_inv_array = Xinv_arr[0,:,1,:]
+                                elif forc == 'nat':
+                                    FORC_inv_array = Xinv_arr[0,:,2,:]
+                                else:
+                                    FORC_inv_array = None
+                                #current_color_brighter = [[np.min((1,c*1.4)) for c in gt.hexcolor(hexcol)] for hexcol in cycle_color]  # for VAL
+                                #c_darker = [ch*0.7 for ch in gt.hexcolor(c)]
+                                
+                                if FORC_inv_array is not None:
+                                    print(f'{forc} FORC_inv_array shape:',FORC_inv_array.shape)
+                                    
+                                    if FORC_inv_array.shape[-1] != len(current_inv_years) and not trunc_padded_xinv:
+                                        current_inv_years = all_years[-FORC_inv_array.shape[-1]:]
+                                    elif FORC_inv_array.shape[-1] != len(current_inv_years) :
+                                        if len( FORC_inv_array.shape) == 2:
+                                            FORC_inv_array = FORC_inv_array[:,-len(current_inv_years):]
+                                        elif len( FORC_inv_array.shape) == 3:
+                                            FORC_inv_array = FORC_inv_array[:,:,-len(current_inv_years):]
+                
+                                    if FORC_inv_array.shape[0] == 1 :
+                                        current_meanFORC_m = FORC_inv_array.squeeze(axis=0)
+                                        current_std_FORC_m = None
+                                        print('MONO FORC_inv_array: current_meanFORC_m shape:',current_meanFORC_m.shape)
+            
+                                    else:
+                                        current_meanFORC_m = FORC_inv_array.mean(axis=0)
+                                        current_std_FORC_m = local_std_coeff * FORC_inv_array.std(axis=0,ddof=1)
+                                        print('MULTI FORC_inv_array: current_meanFORC_m shape:',current_meanFORC_m.shape)
+            
+                                    if plot_forc_shaded_region :                                            
+                                        if current_std_FORC_m is not None:
+                                            ax.fill_between(current_inv_years, current_meanFORC_m - current_std_FORC_m, current_meanFORC_m + current_std_FORC_m,
+                                                            ec=cs, fc=gt.lighter_color(cs), alpha=alpha_for_mean_shaded, linewidth=lw_for_mean_shaded,
+                                                            hatch=hatch_for_mean_shaded_inv, zorder=2)
+                                            ax.fill(np.NaN, np.NaN, 
+                                                    ec=cs, fc=gt.lighter_color(cs), alpha=alpha_for_mean_shaded, linewidth=lw_for_mean_shaded,
+                                                    hatch=hatch_for_mean_shaded_inv, label=f"inv {forc.upper()}")
+                                        ax.plot(current_inv_years, current_meanFORC_m, color=cs, lw=1, ls='-', label=f"inv {forc.upper()}")
+                                        
+                                    else:
+                                        ax.errorbar(current_inv_years, current_meanFORC_m, yerr=current_std_FORC_m, color=cs,
+                                                    lw=2, elinewidth=1, alpha=0.8, label=f"inv {forc.upper()}")
+                                        #hdf[iforc], = ax.plot(current_inv_years, current_meanFORC_m, color=c, lw=2, alpha=0.8)
 
                     # -------------------------------------------------------------
                     # Plotting Y: HIST source data forcings (plus errorbars)
@@ -3992,6 +4111,7 @@ def plot_averaged_inv_all_forcings_by_net (base_case_to_explore, sub_case_to_exp
                     # -------------------------------------------------------------
                     # Plotting OBS to Invert
                     if mod_to_invert in obs_set:
+                        HIST_label = "OBS"
                         # uniquement les HIST/Obs selectionnes dans l'inversion (dans la liste Nbe_list)
                         HIST_obs_for_inv_array = obs_df.values[Nbe_list,:].copy()
 
@@ -4003,7 +4123,9 @@ def plot_averaged_inv_all_forcings_by_net (base_case_to_explore, sub_case_to_exp
                             #current_std_ObsHIST_m = local_std_coeff * HIST_obs_for_inv_array.std(axis=0,ddof=1)
                         print(f"\nProfils OBS/HIST to invert is {mod_to_invert} !!")
                         ax.plot(inversion_years, current_mean_ObsHIST_m, color=hist_color, lw=2, ls='-', label=f"src {mod_to_invert}")
-    
+                    else:
+                        HIST_label = "HIST"
+
                     # -------------------------------------------------------------
                     # Plotting Y: HIST Inverted forcings (plus errorbars)
                     if Yinvmean_arr.shape[0] == 1:
@@ -4070,8 +4192,14 @@ def plot_averaged_inv_all_forcings_by_net (base_case_to_explore, sub_case_to_exp
                     
                     mod_for_title_label = mod_to_invert_for_title+'@'+mod_data_source if mod_to_invert in obs_set and mod_to_invert != mod_data_source else mod_to_invert_for_title
                     ax.grid(True,lw=0.75,ls=':')
-                    ax.set_title(f"{mod_for_title_label}: Averaged profiles"+\
-                                 f" ({nb_inverted_single_patt} HIST src. profiles inv. w. {n_x_forc} X forc.) each")
+                    if len(mlt_list_nbe_label) == 1 :
+                        current_nbe_inverted_label = mlt_list_nbe_label[0]
+                    else:
+                        current_nbe_inverted_label = f"{mlt_list_nbe_label[0]} and {len(mlt_list_nbe_label)-1} more ..."
+
+                    ax.set_title(f"{mod_for_title_label}: Inv. of {current_nbe_inverted_label} profile(s)"+\
+                                 f" ({nb_inverted_single_patt} {HIST_label} inv. w. {n_x_forc} X forc.)"+\
+                                     (" each." if nb_inverted_single_patt > 1 else "."))
         
                     if i_mod == 0:
                         ax.legend(loc='upper left', ncol=5, framealpha=0.4)
@@ -4095,7 +4223,8 @@ def plot_averaged_inv_all_forcings_by_net (base_case_to_explore, sub_case_to_exp
             if plot_forc_shaded_region:  suptitle_label += f" [Shaded {interval_label}]"
             else:                        suptitle_label += f" [ErrBar {interval_label}]"
             if plot_src4inv :            suptitle_label += " [+Xsrc]"
-            if plot_inv_x :              suptitle_label += " [+Xini]"
+            if plot_ini_x :              suptitle_label += " [+Xini]"
+            if plot_inv_x :              suptitle_label += " [+Xinv]"
 
             plt.suptitle(f"{suptitle_label}\n"+\
                          f"{base_case_to_explore}\n{cnn_name_base} [Inv. Settings: {inv_label.split('_')[0]}]",

@@ -410,9 +410,93 @@ def look_for_inversion_files(file_prefix='Xinv', inv_dir='.', n=None, verbose=Fa
     return file_nbe_suffix
 
 
+# def do_list_of_profiles(nb_patt, n_by_page=None,
+#                         nb_of_profiles=None, choice_method='random', rand_seed=0,
+#                         add_mean_of_all=False, verbose=False):
+#     """ Get a list of indices on forcings to be inverses or plotted in a page.
+#     Possibilitry to add the whole also.
+#     Used mostly for inversion procedure and the subsequent forcing plot figures.
+    
+#     Returns a dictionnary having two fields:
+#         - 'list', the list of indices to be takent into account
+#         - 'label', a label summarysing the selection.
+        
+#     """
+#     import numpy as np
+    
+#     # nb_of_profiles ....... number of obs to choose in case of multiple data (like 'HadCrut200')
+#     # choice_method ... ('sequential','random') method to choose the obs to work if multiple
+#     # rand_seed ..... ramdom generation seed in case of 'random' method
+#     if nb_of_profiles is not None :
+#         if type(nb_of_profiles) is int and choice_method.lower() in ['sequential','random','seq','rand','rnd']:
+#             if nb_of_profiles > nb_patt:
+#                 nb_of_profiles = nb_patt
+#             if verbose:
+#                 print(f"Selecting '{choice_method}'-ly {nb_of_profiles} profiles from the {nb_patt} availables")
+#             if choice_method.lower() in ['random','rand','rnd'] :
+#                 if rand_seed is not None :
+#                     np.random.seed(rand_seed)
+#                 list_of_patt = np.random.permutation(nb_patt)[np.arange(nb_of_profiles)].tolist()
+#                 nbe_invert_label = f"SEL{nb_of_profiles}RND"+(f"{rand_seed}" if rand_seed else "")+f"-FROM{nb_patt}"
+
+#             elif choice_method.lower() in ['sequential' ,'seq'] :
+#                 list_of_patt = np.arange(nb_of_profiles).tolist()
+#                 nbe_invert_label = f'SEL{nb_of_profiles}SEQ-FROM{nb_patt}'
+                
+#             if verbose:
+#                 print(f"   Selecting rows {nb_of_profiles}/{nb_patt} from obs_arr data array: '{nbe_invert_label}'")
+
+#         elif type(nb_of_profiles) is list :
+#             list_of_patt = nb_of_profiles
+#             nbe_invert_label = f'SEL{len(list_of_patt)}LST-FROM{nb_patt}'
+
+#             if verbose:
+#                 print(f"   Selecting rows by list {len(list_of_patt)}/{nb_patt} from obs_arr data array: '{nbe_invert_label}'")
+        
+#     else:
+#         list_of_patt = np.arange(nb_patt).tolist()
+#         nbe_invert_label = f'ALL{nb_patt}'
+        
+#         if verbose:
+#             print(f"   Selecting all {nb_patt} from obs_arr data array: '{nbe_invert_label}'")
+
+#     nb_sel_patt = len(list_of_patt)
+
+#     select_patt_for_inversion_ok = n_by_page is not None
+
+#     if select_patt_for_inversion_ok :
+#         one_page_n = min((n_by_page,nb_sel_patt))
+#         if one_page_n < n_by_page :
+#             list_of_nbe = np.arange(one_page_n).tolist()  # all patterns
+#             nbe_invert_title = f"all {len(list_of_nbe)}{'+ALL' if add_mean_of_all else ''} profiles"
+#         else:
+#             list_of_nbe = np.linspace(0, nb_sel_patt-1, one_page_n-1, endpoint=True, dtype=int).tolist()  # uniquement nb_sel_patt patterns
+#             nbe_invert_title = f"only {len(list_of_nbe)}{'+ALL' if add_mean_of_all else ''} profiles"
+#         if verbose:
+#             print('select_patt_for_inversion:',list_of_nbe,nbe_invert_title)
+        
+#     else:
+#         list_of_nbe = list_of_patt       # tous les patterns de la liste prefixee
+#         nbe_invert_title = old_nbe_invert_title = f"all {len(list_of_nbe)}{'+ALL' if add_mean_of_all else ''} profiles"
+#         if nb_of_profiles is not None:
+#             nbe_invert_title = f"{choice_method} sel {len(list_of_nbe)} from {nb_patt}{'+ALLSEL' if add_mean_of_all else ''} profiles"
+#         if verbose:
+#             print('All:',list_of_nbe,nbe_invert_title)
+    
+#     if add_mean_of_all:
+#         list_of_nbe.append(np.arange(nb_sel_patt).tolist()) # on ajoute a la liste un element contenant les indices des tous les profils du modele m (pour inverser l'HIST_ moyenne)
+#         if verbose:
+#             print('End:',list_of_nbe)
+
+#     #print(list_of_nbe,len(list_of_nbe),nbe_invert_title)
+#     tmp_dic = { 'list':list_of_nbe, 'label':nbe_invert_label, 'title':nbe_invert_title , 'old_label':old_nbe_invert_title }
+
+#     return tmp_dic
+
 def do_list_of_profiles(nb_patt, n_by_page=None,
                         nb_of_profiles=None, choice_method='random', rand_seed=0,
-                        add_mean_of_all=False, verbose=False):
+                        do_mean_of_each_model=False, add_mean_of_all=False,
+                        verbose=False):
     """ Get a list of indices on forcings to be inverses or plotted in a page.
     Possibilitry to add the whole also.
     Used mostly for inversion procedure and the subsequent forcing plot figures.
@@ -424,6 +508,10 @@ def do_list_of_profiles(nb_patt, n_by_page=None,
     """
     import numpy as np
     
+    if add_mean_of_all and do_mean_of_each_model:
+        print("\n ** unspected simultaneous `True` values of flags 'add_mean_of_all' and 'do_mean_of_each_model'. Only one is spected to be True. Setting 'add_mean_of_all' to `False` **")
+        add_mean_of_all = False
+
     # nb_of_profiles ....... number of obs to choose in case of multiple data (like 'HadCrut200')
     # choice_method ... ('sequential','random') method to choose the obs to work if multiple
     # rand_seed ..... ramdom generation seed in case of 'random' method
@@ -483,13 +571,23 @@ def do_list_of_profiles(nb_patt, n_by_page=None,
         if verbose:
             print('All:',list_of_nbe,nbe_invert_title)
     
-    if add_mean_of_all:
+    if add_mean_of_all and not do_mean_of_each_model:
         list_of_nbe.append(np.arange(nb_sel_patt).tolist()) # on ajoute a la liste un element contenant les indices des tous les profils du modele m (pour inverser l'HIST_ moyenne)
         if verbose:
             print('End:',list_of_nbe)
 
+    if do_mean_of_each_model:
+        new_list_of_nbe = [e for e in list_of_nbe if type(e) is not list]
+        list_of_nbe = [new_list_of_nbe]  # la liste de nbe est la loiste de la liste ...pour inverser l'HIST_moyenne uniquement
+        nbe_invert_label = f"AVERAGED-{nbe_invert_label}"
+        nbe_invert_title = f"Averaged {nbe_invert_title}"
+        if verbose:
+            print('End:',list_of_nbe)
+
     #print(list_of_nbe,len(list_of_nbe),nbe_invert_title)
-    tmp_dic = { 'list':list_of_nbe, 'label':nbe_invert_label, 'title':nbe_invert_title , 'old_label':old_nbe_invert_title }
+    tmp_dic = { 'list':list_of_nbe, 'label':nbe_invert_label, 'title':nbe_invert_title,
+               #'old_label':old_nbe_invert_title
+               }
 
     return tmp_dic
 
