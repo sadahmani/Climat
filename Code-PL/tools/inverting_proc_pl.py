@@ -3236,6 +3236,7 @@ def plot_averaged_inv_all_forcings_by_net (base_case_to_explore, sub_case_to_exp
                                            data_in_dir=None, data_out_dir=None, figs_dir=None, save_figs=True,
                                            source_dirname='data_source_pl',
                                            plot_forc_shaded_region=False,
+                                           plot_inv_forc_shaded_region=False,
                                            alpha_for_shaded=0.4, lw_for_shaded=0.5, hatch_for_shaded='//', 
                                            hatch_src_for_shaded='||', hatch_for_shaded_inv='\\\\\\', errorlimits_percent=None, errorlimits_n_rms=1,
                                            alpha_for_mean_shaded=0.4, lw_for_mean_shaded=0.5, hatch_for_mean_shaded_inv='\\\\',
@@ -3910,15 +3911,15 @@ def plot_averaged_inv_all_forcings_by_net (base_case_to_explore, sub_case_to_exp
                                     print('MULTI FORC_src_from_model: current_meanFORC_m shape:',current_meanFORC_m.shape)
         
                                 if plot_forc_shaded_region :
-                                    if current_std_FORC_m is not None:
-                                        ax.fill_between(inversion_years, current_meanFORC_m - current_std_FORC_m, current_meanFORC_m + current_std_FORC_m,
-                                                        ec=cs, fc=gt.lighter_color(cs), alpha=alpha_for_shaded, linewidth=lw_for_shaded,
-                                                        hatch=hatch_src_for_shaded, zorder=2)
-                                        ax.fill(np.NaN, np.NaN, 
-                                                ec=cs, fc=gt.lighter_color(cs), alpha=alpha_for_shaded, linewidth=lw_for_shaded,
-                                                hatch=hatch_src_for_shaded, label=f"src {forc.upper()}")
+                                    if plot_inv_forc_shaded_region :
+                                        if current_std_FORC_m is not None:
+                                            ax.fill_between(inversion_years, current_meanFORC_m - current_std_FORC_m, current_meanFORC_m + current_std_FORC_m,
+                                                            ec=cs, fc=gt.lighter_color(cs), alpha=alpha_for_shaded, linewidth=lw_for_shaded,
+                                                            hatch=hatch_src_for_shaded, zorder=2)
+                                            ax.fill(np.NaN, np.NaN, 
+                                                    ec=cs, fc=gt.lighter_color(cs), alpha=alpha_for_shaded, linewidth=lw_for_shaded,
+                                                    hatch=hatch_src_for_shaded, label=f"src {forc.upper()}")
                                     ax.plot(inversion_years, current_meanFORC_m, color=cs, lw=1, ls='-', label=f"src {forc.upper()}")
-                                    
                                 else:
                                     ax.errorbar(inversion_years, current_meanFORC_m, yerr=current_std_FORC_m, color=cs,
                                                 lw=2, elinewidth=1, alpha=0.8, label=f"src {forc.upper()}")
@@ -4048,10 +4049,10 @@ def plot_averaged_inv_all_forcings_by_net (base_case_to_explore, sub_case_to_exp
                     # -------------------------------------------------------------------------
                     # X reference (or Background for inversion)
                     # -------------------------------------------------------------------------
-                    hfo = ax.plot(inversion_years, GHG_ens_ab_arr_m.T, c=gt.darker_color(forcing_inv_colors[0]), ls='--', lw=1.5,
-                                  label="$FORC_{ref.(other)}$")
-                    ax.plot(inversion_years, AER_ens_ab_arr_m.T, c=gt.darker_color(forcing_inv_colors[1]), ls='--', lw=1.5)
-                    ax.plot(inversion_years, NAT_ens_ab_arr_m.T, c=gt.darker_color(forcing_inv_colors[2]), ls='--', lw=1.5)
+                    # hfo = ax.plot(inversion_years, GHG_ens_ab_arr_m.T, c=gt.darker_color(forcing_inv_colors[0]), ls='--', lw=1.5,
+                    #               label="$FORC_{ref.(other)}$")
+                    # ax.plot(inversion_years, AER_ens_ab_arr_m.T, c=gt.darker_color(forcing_inv_colors[1]), ls='--', lw=1.5)
+                    # ax.plot(inversion_years, NAT_ens_ab_arr_m.T, c=gt.darker_color(forcing_inv_colors[2]), ls='--', lw=1.5)
     
                     # -------------------------------------------------------------
                     # Plotting the means of Inverted forcings X: GHG, AER and NAT
