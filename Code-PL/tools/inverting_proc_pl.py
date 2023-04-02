@@ -4131,7 +4131,8 @@ def plot_averaged_inv_all_forcings_by_net (base_case_to_explore, sub_case_to_exp
                     # Plotting Y: HIST Inverted forcings (plus errorbars)
                     if Yinvmean_arr.shape[0] == 1:
                         tmp_y = Yinvmean_arr.squeeze(axis=0)
-                        tmp_y_err = None
+                        # tmp_y_err = None
+                        tmp_y_err = Yinvstd_arr.squeeze(axis=0)
                         if plot_mean_err :
                             tmp_y_meanerr = local_std_coeff * Yinvstd_arr.squeeze(axis=0)
                     else:
